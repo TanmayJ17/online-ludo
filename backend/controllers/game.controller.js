@@ -1,4 +1,5 @@
 const Game = require('../models/game.models');
+const { getMovableTokens } = require('../services/moment.service');
 const generateRoomCode = require('../utils/generateRoomCode');
 
 module.exports.createRoom = async(req, res) => {
@@ -234,6 +235,85 @@ module.exports.startGame = async(req, res) => {
             message: "Game started successfully",
             game
         });
+    } catch (error) {
+        if (error.name === "ValidationError") {
+            return res.status(400).json({
+                message: error.message
+            });
+        }
+
+        return res.status(500).json({
+            message: error.message,
+            error
+        })
+    }
+}
+
+module.exports.rollDice = async(req, res) => {
+    const {roomCode} = req.body;
+    if(!roomCode){
+        return res.status(400).json({
+            message: "Please enter room code"
+        })
+    }
+
+    try {
+        const game = await Game.findOne({roomCode}).populate(
+        "players.user",
+        "username profileImage"
+        );
+
+        if(!game){
+            return res.status(404).json({
+                message: "Room not found"
+            })
+        }
+        if(game.status !== "playing"){
+            return res.status(400).json({
+                message: "Game is not in playing state"
+            })
+        }
+
+        if (game.currentDiceValue !== null) {
+            return res.status(400).json({
+                message: "You have already rolled the dice"
+            });
+        }
+
+        const currentPlayer = game.players[game.currentTurnIndex];
+        if (!currentPlayer.user._id.equals(req.user._id)) {
+            return res.status(403).json({
+                message: "It's not your turn"
+            });
+        }
+
+        const dice = Math.floor(Math.random() * 6) + 1;
+        game.currentDiceValue = dice;
+
+        const movableTokens = getMovableTokens(currentPlayer, dice);
+        if(movableTokens.length === 0){
+            game.currentDiceValue = null;
+            game.currentTurnIndex = (game.currentTurnIndex + 1) % game.players.length;
+
+            const nextPlayer = game.players[game.currentTurnIndex];
+
+            game.turnStartedAt = new Date();
+            await game.save();
+
+            return res.status(200).json({
+                message: "No valid moves, turn skipped",
+                color: nextPlayer.color,
+                username: nextPlayer.user.username
+            })
+        }
+
+        game.turnStartedAt = new Date();
+        await game.save();
+        return res.status(200).json({
+            message: "Dice rolled successfully",
+            dice,
+            movableTokens
+        })
     } catch (error) {
         if (error.name === "ValidationError") {
             return res.status(400).json({
