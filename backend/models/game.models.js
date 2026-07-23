@@ -7,7 +7,7 @@ const tokenSchema = new mongoose.Schema({
         default: -1
     }
 }, { _id: false });
-
+ 
 function createTokens(){
     return [
         {number: 1, boardPosition: -1},
@@ -32,7 +32,7 @@ const playerSchema = new mongoose.Schema({
         type: Number,
         default: 0,
         min: 0,
-        maz: 4
+        max: 4
     },
     tokens: {
         type: [tokenSchema],
@@ -70,6 +70,7 @@ const gameSchema = new mongoose.Schema({
     currentTurnIndex: {
         type: Number,
         default: -1,
+        min: -1
     },
     players: {
         type: [playerSchema],
@@ -78,7 +79,15 @@ const gameSchema = new mongoose.Schema({
     rankings: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
-    }]
+    }],
+    currentDiceValue: {
+        type: Number,
+        default: null
+    },
+    turnStartedAt: {
+        type: Date,
+        default: null
+    }
 }, {timestamps: true});
 
 module.exports = mongoose.model('Game', gameSchema);

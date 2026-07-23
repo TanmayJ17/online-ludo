@@ -176,3 +176,74 @@ module.exports.selectColor = async(req, res) => {
         })
     }
 }
+
+module.exports.startGame = async(req, res) => {
+    const {roomCode} = req.body;
+    if(!roomCode){
+        return res.status(400).json({
+            message: "Please enter room code"
+        })
+    }
+
+    try {
+        const game = await Game.findOne({roomCode}).populate(
+        "players.user",
+        "username profileImage"
+        );
+
+        if(!game){
+            return res.status(404).json({
+                message: "Room not found"
+            })
+        }
+
+        if (!game.host.equals(req.user._id)) {
+            return res.status(403).json({
+                message: "Only host can start the game"
+            });
+        }
+
+        if(game.status !== "waiting"){
+            return res.status(400).json({
+                message: "Game has already started"
+            })
+        }
+        if(game.players.length < 2){
+            return res.status(400).json({
+                message: "Atleast 2 players are required"
+            })
+        }
+
+        const COLOR_ORDER = {
+            red: 0,
+            green: 1,
+            yellow: 2,
+            blue: 3
+        };
+        game.players.sort((a, b) => {
+            return COLOR_ORDER[a.color] - COLOR_ORDER[b.color];
+        });
+
+        game.status = "playing";
+        game.currentTurnIndex = 0;
+        game.currentDiceValue = null;
+        game.turnStartedAt = new Date();
+
+        await game.save();
+        return res.status(200).json({
+            message: "Game started successfully",
+            game
+        });
+    } catch (error) {
+        if (error.name === "ValidationError") {
+            return res.status(400).json({
+                message: error.message
+            });
+        }
+
+        return res.status(500).json({
+            message: error.message,
+            error
+        })
+    }
+}
