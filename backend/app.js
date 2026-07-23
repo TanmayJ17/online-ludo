@@ -12,12 +12,14 @@ app.use(express.json());
 app.use(cookieParser());
 
 const authRoutes = require('./routes/auth.routes');
+const gameRoutes = require('./routes/game.routes');
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
 app.use('/auth', authRoutes);
+app.use('/game', gameRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
