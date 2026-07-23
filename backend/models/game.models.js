@@ -37,6 +37,10 @@ const playerSchema = new mongoose.Schema({
     tokens: {
         type: [tokenSchema],
         default: createTokens
+    },
+    warnings: {
+        type: Number,
+        default: 0
     }
 }, { _id: false });
 

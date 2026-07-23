@@ -38,3 +38,141 @@ module.exports.createRoom = async(req, res) => {
         }
     }
 }
+
+module.exports.joinRoom = async(req, res) => {
+    const {roomCode} = req.body;
+    if(!roomCode){
+        return res.status(400).json({
+            message: "Room code is required"
+        })
+    }
+
+    try {
+       const game = await Game.findOne({roomCode}).populate(
+        "players.user",
+        "username profileImage"
+        );
+
+        if(!game){
+            return res.status(404).json({
+                message: "Room not found"
+            })
+        }
+        if(game.status !== "waiting"){
+            return res.status(400).json({
+                message: "Game cannot be joined"
+            })
+        }
+        if(game.players.length >= game.maxPlayers){
+            return res.status(400).json({
+                message: "Room is full"
+            })
+        }
+       
+        const alreadyJoined = game.players.some(player => player.user._id.equals(req.user._id));
+        if(alreadyJoined){
+            return res.status(400).json({
+                message: "User already joined"
+            })
+        }
+
+        const allColors = ["red", "blue", "green", "yellow"];
+        const takenColors = game.players.map(player => player.color);
+        const availableColors = allColors.filter(color => !takenColors.includes(color));
+
+        return res.status(200).json({
+            message: "Room found",
+            availableColors,
+            game: {
+                roomCode: game.roomCode,
+                host: game.host,
+                players: game.players,
+                maxPlayers: game.maxPlayers,
+                status: game.status
+            }
+        });
+
+    } catch (error) {
+        if (error.name === "ValidationError") {
+            return res.status(400).json({
+                message: error.message
+            });
+        }
+
+        return res.status(500).json({
+            message: error.message,
+            error
+        })
+    }
+}
+
+module.exports.selectColor = async(req, res) => {
+    const {roomCode, color} = req.body;
+    if(!roomCode || !color){
+        return res.status(400).json({
+            message: "Please enter both room code and chose a color"
+        })
+    }
+
+    try {
+        const game = await Game.findOne({roomCode}).populate(
+        "players.user",
+        "username profileImage"
+        );
+
+        if(!game){
+            return res.status(404).json({
+                message: "Room not found"
+            })
+        }
+        if(game.status !== "waiting"){
+            return res.status(400).json({
+                message: "Game cannot be joined"
+            })
+        }
+        if(game.players.length >= game.maxPlayers){
+            return res.status(400).json({
+                message: "Room is full"
+            })
+        }
+        const alreadyJoined = game.players.some(player => player.user._id.equals(req.user._id));
+        if(alreadyJoined){
+            return res.status(400).json({
+                message: "User already joined"
+            })
+        }
+
+        const allColors = ["red", "blue", "green", "yellow"];
+        const takenColors = game.players.map(player => player.color);
+        if(takenColors.includes(color)){
+            return res.status(400).json({
+                message: "Color not available"
+            })
+        }
+
+        game.players.push({
+            user: req.user._id,
+            color
+        });
+        await game.save();
+        return res.status(200).json({
+            message: "Joined successfully",
+            game
+        })
+        await game.populate(
+            "players.user",
+            "username profileImage"
+        );
+    } catch (error) {
+        if (error.name === "ValidationError") {
+            return res.status(400).json({
+                message: error.message
+            });
+        }
+
+        return res.status(500).json({
+            message: error.message,
+            error
+        })
+    }
+}
