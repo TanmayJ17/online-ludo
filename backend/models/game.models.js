@@ -87,6 +87,10 @@ const gameSchema = new mongoose.Schema({
     turnStartedAt: {
         type: Date,
         default: null
+    },
+    consecutiveSixes: {
+        type: Number,
+        default: 0
     }
 }, {timestamps: true});
 

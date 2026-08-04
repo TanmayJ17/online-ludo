@@ -1,5 +1,5 @@
 const Game = require('../models/game.models');
-const { getMovableTokens } = require('../services/moment.service');
+const { getMovableTokens, MoveToken } = require('../services/moment.service');
 const generateRoomCode = require('../utils/generateRoomCode');
 
 module.exports.createRoom = async(req, res) => {
@@ -288,6 +288,13 @@ module.exports.rollDice = async(req, res) => {
         }
 
         const dice = Math.floor(Math.random() * 6) + 1;
+        if(dice === 6){
+            game.consecutiveSixes++;
+        }
+        else{
+            game.consecutiveSixes = 0;
+        }
+
         game.currentDiceValue = dice;
 
         const movableTokens = getMovableTokens(currentPlayer, dice);
@@ -313,6 +320,92 @@ module.exports.rollDice = async(req, res) => {
             message: "Dice rolled successfully",
             dice,
             movableTokens
+        })
+    } catch (error) {
+        if (error.name === "ValidationError") {
+            return res.status(400).json({
+                message: error.message
+            });
+        }
+
+        return res.status(500).json({
+            message: error.message,
+            error
+        })
+    }
+}
+
+module.exports.moveToken = async (req, res) => {
+    const {roomCode, tokenNumber} = req.body;
+    if(!roomCode || !tokenNumber){
+        return res.status(400).json({
+            message: "Please enter the room code and token number"
+        })
+    }
+
+    try {
+        const game = await Game.findOne({roomCode}).populate(
+        "players.user",
+        "username profileImage"
+        );
+        if(!game){
+            return res.status(404).json({
+                message: "Room not found"
+            })
+        }
+        if(game.status !== "playing"){
+            return res.status(400).json({
+                message: "Game is not in playing state"
+            })
+        }
+        if (game.currentDiceValue === null) {
+            return res.status(400).json({
+                message: "Roll the dice first"
+            });
+        }
+        const currentPlayer = game.players[game.currentTurnIndex];
+        if (!currentPlayer.user._id.equals(req.user._id)) {
+            return res.status(403).json({
+                message: "It's not your turn"
+            });
+        }
+
+        const result = MoveToken(
+            currentPlayer,
+            tokenNumber,
+            game.currentDiceValue
+        );
+        if(!result.success){
+            return res.status(400).json({
+                message: result.message
+            });
+        }
+
+        const dice = game.currentDiceValue;
+        if(dice === 6){
+            if(game.consecutiveSixes >= 3){
+                game.consecutiveSixes = 0;
+                game.currentTurnIndex = (game.currentTurnIndex + 1) % game.players.length;
+            }
+        }
+        else{
+            game.consecutiveSixes = 0;
+            game.currentTurnIndex = (game.currentTurnIndex + 1) % game.players.length;
+        }
+
+        game.currentDiceValue = null;
+        game.turnStartedAt = new Date();
+
+        await game.save();
+
+        const nextPlayer = game.players[game.currentTurnIndex];
+        return res.status(200).json({
+            message: "Token moved successfully",
+            result,
+            nextTurn: {
+                color: nextPlayer.color,
+                username: nextPlayer.user.username
+            }
         })
     } catch (error) {
         if (error.name === "ValidationError") {
