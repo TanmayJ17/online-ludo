@@ -1,6 +1,7 @@
 const Game = require('../models/game.models');
 const User = require('../models/users.models');
 const { getMovableTokens, MoveToken, checkCapture } = require('../services/moment.service');
+const { scheduleTurnTimer, clearTurnTimer } = require('../services/turnTimer.service');
 const generateRoomCode = require('../utils/generateRoomCode');
 
 module.exports.createRoom = async(req, res) => {
@@ -117,6 +118,7 @@ module.exports.selectColor = async(req, res) => {
     }
 
     try {
+        const { io } = require('../app');
         const game = await Game.findOne({roomCode}).populate(
         "players.user",
         "username profileImage"
@@ -161,6 +163,11 @@ module.exports.selectColor = async(req, res) => {
             "players.user",
             "username profileImage"
         );
+
+        io.to(roomCode).emit('playerJoined', {
+            message: "Joined successfully",
+            game
+        });
         return res.status(200).json({
             message: "Joined successfully",
             game
@@ -188,6 +195,7 @@ module.exports.startGame = async(req, res) => {
     }
 
     try {
+        const { io } = require('../app');
         const game = await Game.findOne({roomCode}).populate(
         "players.user",
         "username profileImage"
@@ -232,6 +240,13 @@ module.exports.startGame = async(req, res) => {
         game.turnStartedAt = new Date();
 
         await game.save();
+
+        scheduleTurnTimer(roomCode, () => handleTurnTimeout(roomCode));
+        io.to(roomCode).emit('gameStarted', {
+            message: "Game started successfully",
+            game
+        });
+
         return res.status(200).json({
             message: "Game started successfully",
             game
@@ -289,6 +304,8 @@ module.exports.rollDice = async(req, res) => {
             });
         }
 
+        clearTurnTimer(roomCode); // they made it in time, cancel the countdown
+
         const dice = Math.floor(Math.random() * 6) + 1;
         if(dice === 6){
             game.consecutiveSixes++;
@@ -308,6 +325,8 @@ module.exports.rollDice = async(req, res) => {
 
             game.turnStartedAt = new Date();
             await game.save();
+
+            scheduleTurnTimer(roomCode, () => handleTurnTimeout(roomCode));
 
             return res.status(200).json({
                 message: "No valid moves, turn skipped",
@@ -410,6 +429,8 @@ module.exports.moveToken = async (req, res) => {
             }
             game.status = "finished";
 
+             clearTurnTimer(roomCode);
+
             // update user stats now that we know the game is over
             await Promise.all(
                 game.players.map(async (player) => {
@@ -449,6 +470,10 @@ module.exports.moveToken = async (req, res) => {
 
         await game.save();
 
+        if (game.status !== "finished") {
+            scheduleTurnTimer(roomCode, () => handleTurnTimeout(roomCode));
+        }
+
         const responseBody = {
             message: game.status === "finished" ? "Game finished!" : "Token moved successfully",
             result,
@@ -479,5 +504,73 @@ module.exports.moveToken = async (req, res) => {
             message: error.message,
             error
         })
+    }
+}
+
+async function handleTurnTimeout(roomCode) {
+    const { io } = require('../app');
+
+    try {
+        const game = await Game.findOne({ roomCode }).populate("players.user", "username profileImage");
+
+        // stale timer firing after the game already moved on — ignore it
+        if (!game || game.status !== "playing" || game.currentDiceValue !== null) return;
+
+        const currentPlayer = game.players[game.currentTurnIndex];
+        currentPlayer.warnings += 1;
+
+        const forfeited = currentPlayer.warnings >= 3;
+        if (forfeited) {
+            currentPlayer.rank = game.rankings.length + 1;
+            game.rankings.push(currentPlayer.user._id);
+            currentPlayer.tokens.forEach(t => { t.boardPosition = -1; }); // pull them off the board
+        }
+
+        const unfinishedCount = game.players.filter(p => p.rank === 0).length;
+        if (unfinishedCount <= 1) {
+            for (const player of game.players) {
+                if (player.rank === 0) {
+                    player.rank = game.rankings.length + 1;
+                    game.rankings.push(player.user._id);
+                }
+            }
+            game.status = "finished";
+
+            await Promise.all(
+                game.players.map(async (player) => {
+                    const update = { $inc: { "stats.gamesPlayed": 1 } };
+                    if (player.rank === 1) update.$inc["stats.wins"] = 1;
+                    return User.findByIdAndUpdate(player.user._id, update);
+                })
+            );
+        }
+
+        if (game.status !== "finished") {
+            game.currentTurnIndex = (game.currentTurnIndex + 1) % game.players.length;
+            while (game.players[game.currentTurnIndex].rank !== 0) {
+                game.currentTurnIndex = (game.currentTurnIndex + 1) % game.players.length;
+            }
+            game.consecutiveSixes = 0;
+        }
+
+        game.currentDiceValue = null;
+        game.turnStartedAt = new Date();
+        await game.save();
+
+        io.to(roomCode).emit('turnTimeout', {
+            skippedPlayer: { color: currentPlayer.color, username: currentPlayer.user.username },
+            forfeited,
+            gameFinished: game.status === "finished",
+            rankings: game.status === "finished" ? game.rankings : undefined,
+            nextTurn: game.status !== "finished"
+                ? { color: game.players[game.currentTurnIndex].color, username: game.players[game.currentTurnIndex].user.username }
+                : undefined
+        });
+
+        if (game.status !== "finished") {
+            scheduleTurnTimer(roomCode, () => handleTurnTimeout(roomCode));
+        }
+    } catch (err) {
+        console.log("Turn timeout error:", err);
     }
 }
