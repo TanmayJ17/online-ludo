@@ -15,6 +15,7 @@ app.use(cookieParser());
 
 const authRoutes = require('./routes/auth.routes');
 const gameRoutes = require('./routes/game.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
@@ -22,6 +23,7 @@ app.get('/health', (req, res) => {
 
 app.use('/auth', authRoutes);
 app.use('/game', gameRoutes);
+app.use('/admin', adminRoutes);
 
 // --- Socket.IO setup ---
 const socketAuth = require('./middlewares/socketAuth');
