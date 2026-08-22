@@ -8,8 +8,8 @@ import WaitingRoom from './pages/WaitingRoom';
 import { SocketProvider } from './context/SocketContext';
 
 // test area
-import Board from './components/Board';
-import Token from './components/Token';
+// import Board from './components/Board';
+// import Token from './components/Token';
 // test area end
 
 function App() {
@@ -20,7 +20,7 @@ function App() {
 
 
           {/* test area */}
-          <Route
+          {/* <Route
             path="/"
             element={
               <div className="min-h-screen bg-cream flex items-center justify-center">
@@ -39,7 +39,7 @@ function App() {
                 </Board>
               </div>
             }
-          />
+          /> */}
           {/* test area end */}
 
           <Route path="/login" element={<Login />} />
