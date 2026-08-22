@@ -1,5 +1,5 @@
 import { COLOR_HEX } from '../constants/ludoConstants';
-import { TRACK_COORDS, HOME_STRETCH } from '../constants/boardLayout';
+import { TRACK_COORDS, HOME_STRETCH, HOME_YARD } from '../constants/boardLayout';
 
 const SAFE_TRACK_INDICES = [0, 8, 13, 21, 26, 34, 39, 47];
 
@@ -21,7 +21,7 @@ const HOME_YARD_ZONES = {
     blue:   { row: 9, col: 0 },
 };
 
-function Board() {
+function Board({ children }) {
     return (
         <div
             className="grid bg-white border-4 border-ink/10 rounded-2xl overflow-hidden shadow-lg mx-auto"
@@ -32,7 +32,7 @@ function Board() {
                 height: 'min(90vw, 600px)',
             }}
         >
-            {/* Home yard quadrants */}
+            {/* Home yard backdrops — purely decorative color blocks, no nested grid */}
             {Object.entries(HOME_YARD_ZONES).map(([color, { row, col }]) => (
                 <div
                     key={color}
@@ -43,18 +43,25 @@ function Board() {
                     }}
                     className="p-3"
                 >
-                    <div className="w-full h-full bg-white rounded-xl grid grid-cols-2 grid-rows-2 gap-2 p-3">
-                        {[0, 1, 2, 3].map((i) => (
-                            <div key={i} className="flex items-center justify-center">
-                                <div
-                                    className="w-[55%] h-[55%] rounded-full border-2 border-black/10"
-                                    style={{ backgroundColor: STRETCH_TINT[color] }}
-                                />
-                            </div>
-                        ))}
-                    </div>
+                    <div className="w-full h-full bg-white rounded-xl" />
                 </div>
             ))}
+
+            {/* Empty slot placeholders — same outer-grid coordinates HOME_YARD
+                tokens will use, so they're guaranteed to line up exactly */}
+            {Object.entries(HOME_YARD).map(([color, slots]) =>
+                slots.map(([row, col], i) => (
+                    <div
+                        key={`${color}-slot-${i}`}
+                        style={{
+                            gridRow: row + 1,
+                            gridColumn: col + 1,
+                            backgroundColor: STRETCH_TINT[color],
+                        }}
+                        className="self-center justify-self-center w-[115%] h-[115%] rounded-full border-2 border-black/10"
+                    />
+                ))
+            )}
 
             {/* Track path cells */}
             {TRACK_COORDS.map(([row, col], i) => {
@@ -102,6 +109,8 @@ function Board() {
             >
                 <span className="text-xl">🏁</span>
             </div>
+
+            {children}
         </div>
     );
 }

@@ -7,11 +7,41 @@ import Lobby from './pages/Lobby';
 import WaitingRoom from './pages/WaitingRoom';
 import { SocketProvider } from './context/SocketContext';
 
+// test area
+import Board from './components/Board';
+import Token from './components/Token';
+// test area end
+
 function App() {
   return (
     <AuthProvider>
       <SocketProvider>
         <Routes>
+
+
+          {/* test area */}
+          <Route
+            path="/"
+            element={
+              <div className="min-h-screen bg-cream flex items-center justify-center">
+                <Board>
+                    {['red', 'green', 'yellow', 'blue'].map((color) =>
+                        [0, 1, 2, 3].map((i) => (
+                            <Token
+                                key={`${color}-${i}`}
+                                color={color}
+                                boardPosition={-1}
+                                tokenIndex={i}
+                                isMovable={color === 'red' && i === 0}
+                            />
+                        ))
+                    )}
+                </Board>
+              </div>
+            }
+          />
+          {/* test area end */}
+
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route
