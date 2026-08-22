@@ -3,7 +3,7 @@ const router = express.Router();
 const requireAuth = require('../middlewares/isLoggedIn');
 const { createRoom, joinRoom, selectColor, startGame, rollDice, moveToken } = require('../controllers/game.controller');
 
-console.log({ createRoom, joinRoom, selectColor, startGame, rollDice, moveToken });
+// console.log({ createRoom, joinRoom, selectColor, startGame, rollDice, moveToken });
 
 router.post('/create', requireAuth, createRoom);
 router.post('/join', requireAuth, joinRoom);

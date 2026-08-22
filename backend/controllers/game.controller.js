@@ -1,4 +1,5 @@
 const Game = require('../models/game.models');
+const User = require('../models/users.models');
 const { getMovableTokens, MoveToken, checkCapture } = require('../services/moment.service');
 const generateRoomCode = require('../utils/generateRoomCode');
 
@@ -258,6 +259,7 @@ module.exports.rollDice = async(req, res) => {
     }
 
     try {
+        const { io } = require('../app');
         const game = await Game.findOne({roomCode}).populate(
         "players.user",
         "username profileImage"
@@ -316,6 +318,11 @@ module.exports.rollDice = async(req, res) => {
 
         game.turnStartedAt = new Date();
         await game.save();
+
+        io.to(roomCode).emit('diceRolled', {
+            dice,
+            movableTokens
+        });
         return res.status(200).json({
             message: "Dice rolled successfully",
             dice,
@@ -344,6 +351,7 @@ module.exports.moveToken = async (req, res) => {
     }
 
     try {
+        const { io } = require('../app');
         const game = await Game.findOne({roomCode}).populate(
         "players.user",
         "username profileImage"
@@ -384,18 +392,56 @@ module.exports.moveToken = async (req, res) => {
         const movedToken = currentPlayer.tokens.find(t => t.number === tokenNumber);
         const captureResult = checkCapture(game, currentPlayer, movedToken);
 
-        const dice = game.currentDiceValue;
-        const rolledSix = dice === 6;
-        const forfeitTurn = rolledSix && game.consecutiveSixes >= 3; // 3 sixes in a row = pass, no exceptions
+        // --- Win condition check ---
+        const justFinished = currentPlayer.tokens.every(t => t.boardPosition === 58) && currentPlayer.rank === 0;
+        if (justFinished) {
+            currentPlayer.rank = game.rankings.length + 1;
+            game.rankings.push(currentPlayer.user._id);
+        }
 
-        if (forfeitTurn) {
-            game.consecutiveSixes = 0;
-            game.currentTurnIndex = (game.currentTurnIndex + 1) % game.players.length;
-        } else if (rolledSix || captureResult.captured) {
-            // extra turn — same player goes again, currentTurnIndex unchanged
-        } else {
-            game.consecutiveSixes = 0;
-            game.currentTurnIndex = (game.currentTurnIndex + 1) % game.players.length;
+        const unfinishedCount = game.players.filter(p => p.rank === 0).length;
+        if (unfinishedCount <= 1) {
+            // Only one (or zero) players left playing — assign them the last rank and end the game
+            for (const player of game.players) {
+                if (player.rank === 0) {
+                    player.rank = game.rankings.length + 1;
+                    game.rankings.push(player.user._id);
+                }
+            }
+            game.status = "finished";
+
+            // update user stats now that we know the game is over
+            await Promise.all(
+                game.players.map(async (player) => {
+                    const update = { $inc: { "stats.gamesPlayed": 1 } };
+                    if (player.rank === 1) {
+                        update.$inc["stats.wins"] = 1;
+                    }
+                    return User.findByIdAndUpdate(player.user._id, update);
+                })
+            );
+        }
+
+        // --- Turn advancement (skipped entirely if the game just ended) ---
+        if (game.status !== "finished") {
+            const dice = game.currentDiceValue;
+            const rolledSix = dice === 6;
+            const forfeitTurn = rolledSix && game.consecutiveSixes >= 3;
+
+            if (forfeitTurn) {
+                game.consecutiveSixes = 0;
+                game.currentTurnIndex = (game.currentTurnIndex + 1) % game.players.length;
+            } else if (rolledSix || captureResult.captured) {
+                // extra turn — same player goes again
+            } else {
+                game.consecutiveSixes = 0;
+                game.currentTurnIndex = (game.currentTurnIndex + 1) % game.players.length;
+            }
+
+            // A finished player should never be landed on as "next turn" — skip past them
+            while (game.players[game.currentTurnIndex].rank !== 0) {
+                game.currentTurnIndex = (game.currentTurnIndex + 1) % game.players.length;
+            }
         }
 
         game.currentDiceValue = null;
@@ -403,16 +449,25 @@ module.exports.moveToken = async (req, res) => {
 
         await game.save();
 
-        const nextPlayer = game.players[game.currentTurnIndex];
-        return res.status(200).json({
-            message: "Token moved successfully",
+        const responseBody = {
+            message: game.status === "finished" ? "Game finished!" : "Token moved successfully",
             result,
             capture: captureResult,
-            nextTurn: {
+            gameFinished: game.status === "finished"
+        };
+
+        if (game.status === "finished") {
+            responseBody.rankings = game.rankings; // ordered list of user IDs, 1st place first
+        } else {
+            const nextPlayer = game.players[game.currentTurnIndex];
+            responseBody.nextTurn = {
                 color: nextPlayer.color,
                 username: nextPlayer.user.username
-            }
-        })
+            };
+        }
+
+        io.to(roomCode).emit('tokenMoved', responseBody);
+        return res.status(200).json(responseBody);
     } catch (error) {
         if (error.name === "ValidationError") {
             return res.status(400).json({
