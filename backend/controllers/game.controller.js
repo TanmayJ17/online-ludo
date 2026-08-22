@@ -535,3 +535,39 @@ async function handleTurnTimeout(roomCode) {
         console.log("Turn timeout error:", err);
     }
 }
+
+module.exports.getGameState = async (req, res) => {
+    const { roomCode } = req.body;
+    if (!roomCode) {
+        return res.status(400).json({
+            message: "Room code is required"
+        });
+    }
+
+    try {
+        const game = await Game.findOne({ roomCode }).populate(
+            "players.user",
+            "username profileImage"
+        );
+
+        if (!game) {
+            return res.status(404).json({
+                message: "Room not found"
+            });
+        }
+
+        const isPlayer = game.players.some(p => p.user._id.equals(req.user._id));
+        if (!isPlayer) {
+            return res.status(403).json({
+                message: "You are not part of this game"
+            });
+        }
+
+        return res.status(200).json({ game });
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message,
+            error
+        });
+    }
+};
