@@ -1,3 +1,15 @@
+const { START_POSITIONS, TRACK_LENGTH, SAFE_SQUARES } = require('../constants/board.constants');
+
+function toAbsolutePosition(color, boardPosition) {
+    // Tokens at home (-1) or in the private home stretch (52-58)
+    // aren't on the shared track, so they can't collide with anyone.
+    if (boardPosition < 0 || boardPosition >= TRACK_LENGTH) {
+        return null;
+    }
+
+    return (START_POSITIONS[color] + boardPosition) % TRACK_LENGTH;
+}
+
 function getMovableTokens(player, dice){
     const movableTokens = [];
 
@@ -82,17 +94,40 @@ function MoveToken(player, tokenNumber, dice) {
     };
 }
 
-function checkCapture(game, currentPlayer, movedToken){
-    for(const player of game.players){
-        if(player._id == currentPlayer._id) continue;
+function checkCapture(game, currentPlayer, movedToken) {
+    // Tokens in the home stretch (52-57) or finished (58) are off the
+    // shared track, so nothing can be captured there.
+    if (movedToken.boardPosition < 0 || movedToken.boardPosition >= TRACK_LENGTH) {
+        return { captured: false, capturedTokens: [] };
+    }
 
-        for(const token of player.tokens){
-            
+    const landedSquare = toAbsolutePosition(currentPlayer.color, movedToken.boardPosition);
+
+    if (SAFE_SQUARES.includes(landedSquare)) {
+        return { captured: false, capturedTokens: [] };
+    }
+
+    const capturedTokens = [];
+
+    for (const player of game.players) {
+        if (player.color === currentPlayer.color) continue; // never capture your own token
+
+        for (const token of player.tokens) {
+            const opponentSquare = toAbsolutePosition(player.color, token.boardPosition);
+
+            if (opponentSquare !== null && opponentSquare === landedSquare) {
+                token.boardPosition = -1; // send it back home
+                capturedTokens.push({ color: player.color, tokenNumber: token.number });
+            }
         }
     }
+
+    return { captured: capturedTokens.length > 0, capturedTokens };
 }
 
 module.exports = {
     getMovableTokens,
-    MoveToken
+    MoveToken,
+    toAbsolutePosition,
+    checkCapture
 };

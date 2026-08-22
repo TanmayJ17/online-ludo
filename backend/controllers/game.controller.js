@@ -1,5 +1,5 @@
 const Game = require('../models/game.models');
-const { getMovableTokens, MoveToken } = require('../services/moment.service');
+const { getMovableTokens, MoveToken, checkCapture } = require('../services/moment.service');
 const generateRoomCode = require('../utils/generateRoomCode');
 
 module.exports.createRoom = async(req, res) => {
@@ -156,14 +156,14 @@ module.exports.selectColor = async(req, res) => {
             color
         });
         await game.save();
-        return res.status(200).json({
-            message: "Joined successfully",
-            game
-        })
         await game.populate(
             "players.user",
             "username profileImage"
         );
+        return res.status(200).json({
+            message: "Joined successfully",
+            game
+        })
     } catch (error) {
         if (error.name === "ValidationError") {
             return res.status(400).json({
@@ -381,14 +381,19 @@ module.exports.moveToken = async (req, res) => {
             });
         }
 
+        const movedToken = currentPlayer.tokens.find(t => t.number === tokenNumber);
+        const captureResult = checkCapture(game, currentPlayer, movedToken);
+
         const dice = game.currentDiceValue;
-        if(dice === 6){
-            if(game.consecutiveSixes >= 3){
-                game.consecutiveSixes = 0;
-                game.currentTurnIndex = (game.currentTurnIndex + 1) % game.players.length;
-            }
-        }
-        else{
+        const rolledSix = dice === 6;
+        const forfeitTurn = rolledSix && game.consecutiveSixes >= 3; // 3 sixes in a row = pass, no exceptions
+
+        if (forfeitTurn) {
+            game.consecutiveSixes = 0;
+            game.currentTurnIndex = (game.currentTurnIndex + 1) % game.players.length;
+        } else if (rolledSix || captureResult.captured) {
+            // extra turn — same player goes again, currentTurnIndex unchanged
+        } else {
             game.consecutiveSixes = 0;
             game.currentTurnIndex = (game.currentTurnIndex + 1) % game.players.length;
         }
@@ -402,6 +407,7 @@ module.exports.moveToken = async (req, res) => {
         return res.status(200).json({
             message: "Token moved successfully",
             result,
+            capture: captureResult,
             nextTurn: {
                 color: nextPlayer.color,
                 username: nextPlayer.user.username
