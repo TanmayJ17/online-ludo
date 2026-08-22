@@ -2,8 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import CellTrack from '../components/CellTrack';
 
-const COLORS = ['red', 'green', 'yellow', 'blue'];
+const COLORS = [
+    { name: 'red', hex: '#E8483A' },
+    { name: 'green', hex: '#2FA84F' },
+    { name: 'yellow', hex: '#F5B700' },
+    { name: 'blue', hex: '#2D6CDF' },
+];
 
 function Lobby() {
     const [selectedColor, setSelectedColor] = useState('red');
@@ -42,73 +48,96 @@ function Lobby() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-orange-100 via-rose-50 to-yellow-100 px-4 py-10">
-            <div className="max-w-md mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-2xl font-bold text-orange-600">
-                        Hey, {user?.username} 👋
-                    </h1>
+        <div className="min-h-screen bg-cream px-4 py-10">
+            <div className="max-w-2xl mx-auto">
+
+                <div className="flex justify-between items-start mb-2">
+                    <div>
+                        <p className="font-body text-sm text-ink/50">Welcome back</p>
+                        <h2 className="font-display text-2xl font-bold text-ink">{user?.username}</h2>
+                    </div>
                     <button
                         onClick={logout}
-                        className="text-sm text-gray-500 hover:text-red-500"
+                        className="font-body text-sm text-ink/50 hover:text-ludo-red transition mt-1"
                     >
                         Logout
                     </button>
                 </div>
 
+                <div className="text-center my-10">
+                    <h1 className="font-display text-6xl font-extrabold text-ink tracking-tight">
+                        LUDO<span className="text-ludo-red">.</span>
+                    </h1>
+                    <p className="font-body text-ink/60 mt-2 mb-6">
+                        Roll the dice. Race your friends home.
+                    </p>
+                    <CellTrack count={20} />
+                </div>
+
                 {error && (
-                    <p className="text-red-500 text-sm text-center bg-red-50 rounded-lg py-2 mb-4">
+                    <p className="font-body text-sm text-center text-ludo-red bg-white rounded-xl py-2.5 px-4 mb-6 shadow-sm border border-ludo-red/20">
                         {error}
                     </p>
                 )}
 
-                {/* Create room */}
-                <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-                    <h2 className="text-lg font-semibold text-gray-700 mb-3">Create a room</h2>
-                    <p className="text-sm text-gray-500 mb-3">Pick your color</p>
-                    <div className="flex gap-3 mb-4">
-                        {COLORS.map((color) => (
-                            <button
-                                key={color}
-                                onClick={() => setSelectedColor(color)}
-                                className={`w-10 h-10 rounded-full border-4 transition ${
-                                    selectedColor === color ? 'border-gray-700 scale-110' : 'border-transparent'
-                                }`}
-                                style={{ backgroundColor: color }}
-                                aria-label={color}
-                            />
-                        ))}
-                    </div>
-                    <button
-                        onClick={handleCreate}
-                        disabled={loading}
-                        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 rounded-lg transition disabled:opacity-50"
-                    >
-                        Create Room
-                    </button>
-                </div>
+                <div className="grid sm:grid-cols-2 gap-5">
 
-                {/* Join room */}
-                <div className="bg-white rounded-2xl shadow-lg p-6">
-                    <h2 className="text-lg font-semibold text-gray-700 mb-3">Join a room</h2>
-                    <form onSubmit={handleJoin} className="flex gap-2">
-                        <input
-                            type="text"
-                            value={joinCode}
-                            onChange={(e) => setJoinCode(e.target.value)}
-                            placeholder="ROOM CODE"
-                            maxLength={6}
-                            required
-                            className="flex-1 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400 uppercase tracking-widest"
-                        />
+                    <div className="bg-white rounded-3xl shadow-md p-6 border-b-4 border-ludo-red">
+                        <h2 className="font-display text-xl font-bold text-ink mb-1">Create a room</h2>
+                        <p className="font-body text-sm text-ink/50 mb-4">Start a new game and invite friends</p>
+
+                        <p className="font-body text-xs font-semibold text-ink/40 uppercase tracking-wide mb-2">
+                            Your color
+                        </p>
+                        <div className="flex gap-3 mb-5">
+                            {COLORS.map(({ name, hex }) => (
+                                <button
+                                    key={name}
+                                    onClick={() => setSelectedColor(name)}
+                                    style={{ backgroundColor: hex }}
+                                    className={`w-10 h-10 rounded-xl transition-all ${
+                                        selectedColor === name
+                                            ? 'ring-4 ring-offset-2 ring-ink/20 scale-105'
+                                            : 'opacity-70 hover:opacity-100'
+                                    }`}
+                                    aria-label={name}
+                                />
+                            ))}
+                        </div>
+
                         <button
-                            type="submit"
+                            onClick={handleCreate}
                             disabled={loading}
-                            className="bg-gray-800 hover:bg-gray-900 text-white font-semibold px-5 rounded-lg transition disabled:opacity-50"
+                            className="font-display w-full bg-ink hover:bg-ink/90 text-cream font-bold py-3 rounded-xl transition disabled:opacity-50"
                         >
-                            Join
+                            Create Room
                         </button>
-                    </form>
+                    </div>
+
+                    <div className="bg-white rounded-3xl shadow-md p-6 border-b-4 border-ludo-blue flex flex-col">
+                        <h2 className="font-display text-xl font-bold text-ink mb-1">Join a room</h2>
+                        <p className="font-body text-sm text-ink/50 mb-4">Got a code from a friend?</p>
+
+                        <form onSubmit={handleJoin} className="flex flex-col gap-3 mt-auto">
+                            <input
+                                type="text"
+                                value={joinCode}
+                                onChange={(e) => setJoinCode(e.target.value)}
+                                placeholder="ROOM CODE"
+                                maxLength={6}
+                                required
+                                className="font-display text-center text-lg tracking-[0.3em] px-4 py-3 rounded-xl border-2 border-ink/10 focus:outline-none focus:border-ludo-blue uppercase placeholder:tracking-normal placeholder:text-sm placeholder:font-body"
+                            />
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="font-display w-full bg-ludo-blue hover:bg-ludo-blue/90 text-white font-bold py-3 rounded-xl transition disabled:opacity-50"
+                            >
+                                Join Room
+                            </button>
+                        </form>
+                    </div>
+
                 </div>
             </div>
         </div>

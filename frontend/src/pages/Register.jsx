@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import CellTrack from '../components/CellTrack';
 
 function Register() {
     const [username, setUsername] = useState('');
@@ -28,65 +29,72 @@ function Register() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 via-rose-50 to-yellow-100 px-4">
+        <div className="min-h-screen bg-cream flex flex-col items-center justify-center px-4">
+            <h1 className="font-display text-5xl font-extrabold text-ink tracking-tight mb-1">
+                LUDO<span className="text-ludo-red">.</span>
+            </h1>
+            <div className="mb-8">
+                <CellTrack count={12} />
+            </div>
+
             <form
                 onSubmit={handleSubmit}
-                className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm space-y-4"
+                className="bg-white rounded-3xl shadow-md p-8 w-full max-w-sm border-b-4 border-ludo-red space-y-4"
             >
-                <h1 className="text-3xl font-bold text-orange-600 text-center mb-2">
-                    🎲 Join the game
-                </h1>
+                <h2 className="font-display text-xl font-bold text-ink text-center mb-1">
+                    Join the game
+                </h2>
 
                 {error && (
-                    <p className="text-red-500 text-sm text-center bg-red-50 rounded-lg py-2">
+                    <p className="font-body text-sm text-center text-ludo-red bg-ludo-red/5 rounded-xl py-2.5">
                         {error}
                     </p>
                 )}
 
                 <div>
-                    <label className="text-sm font-medium text-gray-600">Username</label>
+                    <label className="font-body text-xs font-semibold text-ink/40 uppercase tracking-wide">Username</label>
                     <input
                         type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         required
-                        className="w-full mt-1 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        className="w-full mt-1 px-4 py-2.5 rounded-xl border-2 border-ink/10 focus:outline-none focus:border-ludo-red font-body"
                     />
                 </div>
 
                 <div>
-                    <label className="text-sm font-medium text-gray-600">Email</label>
+                    <label className="font-body text-xs font-semibold text-ink/40 uppercase tracking-wide">Email</label>
                     <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="w-full mt-1 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        className="w-full mt-1 px-4 py-2.5 rounded-xl border-2 border-ink/10 focus:outline-none focus:border-ludo-red font-body"
                     />
                 </div>
 
                 <div>
-                    <label className="text-sm font-medium text-gray-600">Password</label>
+                    <label className="font-body text-xs font-semibold text-ink/40 uppercase tracking-wide">Password</label>
                     <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="w-full mt-1 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        className="w-full mt-1 px-4 py-2.5 rounded-xl border-2 border-ink/10 focus:outline-none focus:border-ludo-red font-body"
                     />
                 </div>
 
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 rounded-lg transition disabled:opacity-50"
+                    className="font-display w-full bg-ludo-red hover:bg-ludo-red/90 text-white font-bold py-3 rounded-xl transition disabled:opacity-50"
                 >
                     {loading ? 'Creating account...' : 'Register'}
                 </button>
 
-                <p className="text-sm text-center text-gray-500">
+                <p className="font-body text-sm text-center text-ink/50">
                     Already have an account?{' '}
-                    <Link to="/login" className="text-orange-600 font-medium hover:underline">
+                    <Link to="/login" className="text-ludo-red font-semibold hover:underline">
                         Login
                     </Link>
                 </p>

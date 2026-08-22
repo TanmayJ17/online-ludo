@@ -2,7 +2,6 @@ npm init -y
 npm install express mongoose dotenv cors cookie-parser bcryptjs jsonwebtoken
 
 ///////////////////////////////////////////////////////////////////////////////
-
 game model schema
 Game
 │
