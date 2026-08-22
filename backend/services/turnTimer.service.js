@@ -1,7 +1,7 @@
 const timers = {}; // roomCode -> Timeout handle
 
-const TURN_TIME_LIMIT_MS = 10 * 1000; // for testing
-// const TURN_TIME_LIMIT_MS = 60 * 1000;
+// const TURN_TIME_LIMIT_MS = 10 * 1000; // for testing
+const TURN_TIME_LIMIT_MS = 60 * 1000;
 
 function scheduleTurnTimer(roomCode, onTimeout) {
     clearTurnTimer(roomCode); // never let two timers stack for the same room

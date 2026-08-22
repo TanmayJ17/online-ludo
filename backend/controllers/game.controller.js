@@ -1,5 +1,6 @@
 const Game = require('../models/game.models');
 const User = require('../models/users.models');
+const { finalizeIfGameOver } = require('../services/gameEnd.service');
 const { getMovableTokens, MoveToken, checkCapture } = require('../services/moment.service');
 const { scheduleTurnTimer, clearTurnTimer } = require('../services/turnTimer.service');
 const generateRoomCode = require('../utils/generateRoomCode');
@@ -418,30 +419,7 @@ module.exports.moveToken = async (req, res) => {
             game.rankings.push(currentPlayer.user._id);
         }
 
-        const unfinishedCount = game.players.filter(p => p.rank === 0).length;
-        if (unfinishedCount <= 1) {
-            // Only one (or zero) players left playing — assign them the last rank and end the game
-            for (const player of game.players) {
-                if (player.rank === 0) {
-                    player.rank = game.rankings.length + 1;
-                    game.rankings.push(player.user._id);
-                }
-            }
-            game.status = "finished";
-
-             clearTurnTimer(roomCode);
-
-            // update user stats now that we know the game is over
-            await Promise.all(
-                game.players.map(async (player) => {
-                    const update = { $inc: { "stats.gamesPlayed": 1 } };
-                    if (player.rank === 1) {
-                        update.$inc["stats.wins"] = 1;
-                    }
-                    return User.findByIdAndUpdate(player.user._id, update);
-                })
-            );
-        }
+        await finalizeIfGameOver(game, roomCode);
 
         // --- Turn advancement (skipped entirely if the game just ended) ---
         if (game.status !== "finished") {
@@ -526,24 +504,7 @@ async function handleTurnTimeout(roomCode) {
             currentPlayer.tokens.forEach(t => { t.boardPosition = -1; }); // pull them off the board
         }
 
-        const unfinishedCount = game.players.filter(p => p.rank === 0).length;
-        if (unfinishedCount <= 1) {
-            for (const player of game.players) {
-                if (player.rank === 0) {
-                    player.rank = game.rankings.length + 1;
-                    game.rankings.push(player.user._id);
-                }
-            }
-            game.status = "finished";
-
-            await Promise.all(
-                game.players.map(async (player) => {
-                    const update = { $inc: { "stats.gamesPlayed": 1 } };
-                    if (player.rank === 1) update.$inc["stats.wins"] = 1;
-                    return User.findByIdAndUpdate(player.user._id, update);
-                })
-            );
-        }
+        await finalizeIfGameOver(game, roomCode);
 
         if (game.status !== "finished") {
             game.currentTurnIndex = (game.currentTurnIndex + 1) % game.players.length;
