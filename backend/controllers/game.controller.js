@@ -556,13 +556,17 @@ module.exports.getGameState = async (req, res) => {
             });
         }
 
-        const isPlayer = game.players.some(p => p.user._id.equals(req.user._id));
-        if (!isPlayer) {
-            return res.status(403).json({
-                message: "You are not part of this game"
-            });
+        // A room that's still waiting is open to view by anyone with the code
+        // (that's how joining works) — but once gameplay starts, only actual
+        // participants should be able to read the board state.
+        if (game.status !== "waiting") {
+            const isPlayer = game.players.some(p => p.user._id.equals(req.user._id));
+            if (!isPlayer) {
+                return res.status(403).json({
+                    message: "You are not part of this game"
+                });
+            }
         }
-
         return res.status(200).json({ game });
     } catch (error) {
         return res.status(500).json({

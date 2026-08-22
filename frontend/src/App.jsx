@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Lobby from './pages/Lobby';
+import WaitingRoom from './pages/WaitingRoom';
 import { SocketProvider } from './context/SocketContext';
 
 function App() {
@@ -13,6 +14,14 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route
+            path="/waiting/:roomCode"
+            element={
+              <ProtectedRoute>
+                <WaitingRoom />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/"
             element={
