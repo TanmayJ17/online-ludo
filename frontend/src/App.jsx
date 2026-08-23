@@ -6,6 +6,8 @@ import Register from './pages/Register';
 import Lobby from './pages/Lobby';
 import WaitingRoom from './pages/WaitingRoom';
 import { SocketProvider } from './context/SocketContext';
+import AdminRoute from './components/AdminRoute';
+import Admin from './pages/Admin';
 
 // test area
 // import Board from './components/Board';
@@ -53,6 +55,14 @@ function App() {
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <Admin />
+              </AdminRoute>
+            }
+          />
           <Route
             path="/waiting/:roomCode"
             element={

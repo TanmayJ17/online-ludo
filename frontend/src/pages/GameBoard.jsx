@@ -72,15 +72,6 @@ function GameBoard() {
         });
 
         socket.on('tokenMoved', (data) => {
-
-            // checking console
-            console.log('TOKEN MOVED EVENT:', JSON.stringify(data, null, 2));
-            console.log('STATE BEFORE THIS EVENT:', JSON.stringify(
-                gameRef.current?.players.map(p => ({ color: p.color, tokens: p.tokens.map(t => t.boardPosition) })),
-                null, 2
-            ));
-            // end
-
             setDiceValue(null);
             setMovableTokens([]);
 

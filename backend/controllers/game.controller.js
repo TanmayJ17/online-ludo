@@ -337,6 +337,7 @@ module.exports.rollDice = async(req, res) => {
 
             return res.status(200).json({
                 message: "No valid moves, turn skipped",
+                dice,
                 color: nextPlayer.color,
                 username: nextPlayer.user.username
             })

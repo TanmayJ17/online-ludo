@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import CellTrack from '../components/CellTrack';
+import { Link } from 'react-router-dom';
 
 const COLORS = [
     { name: 'red', hex: '#E8483A' },
@@ -51,7 +52,7 @@ function Lobby() {
         <div className="min-h-screen bg-cream px-4 py-10">
             <div className="max-w-2xl mx-auto">
 
-                <div className="flex justify-between items-start mb-2">
+                {/* <div className="flex justify-between items-start mb-2">
                     <div>
                         <p className="font-body text-sm text-ink/50">Welcome back</p>
                         <h2 className="font-display text-2xl font-bold text-ink">{user?.username}</h2>
@@ -62,6 +63,29 @@ function Lobby() {
                     >
                         Logout
                     </button>
+                </div> */}
+
+                <div className="flex justify-between items-start mb-2">
+                    <div>
+                        <p className="font-body text-sm text-ink/50">Welcome back</p>
+                        <h2 className="font-display text-2xl font-bold text-ink">{user?.username}</h2>
+                    </div>
+                    <div className="flex items-center gap-4 mt-1">
+                        {user?.role === 'admin' && (
+                            <Link
+                                to="/admin"
+                                className="font-body text-sm text-ludo-blue hover:underline"
+                            >
+                                Admin
+                            </Link>
+                        )}
+                        <button
+                            onClick={logout}
+                            className="font-body text-sm text-ink/50 hover:text-ludo-red transition"
+                        >
+                            Logout
+                        </button>
+                    </div>
                 </div>
 
                 <div className="text-center my-10">
