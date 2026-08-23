@@ -101,8 +101,8 @@ function Board({ children }) {
             {/* Center hub — each quadrant points toward that color's home yard */}
             <div
                 style={{
-                    gridRow: '7 / span 3',
-                    gridColumn: '7 / span 3',
+                    gridRow: 8,
+                    gridColumn: 8,
                     background: `conic-gradient(${COLOR_HEX.green} 0deg 90deg, ${COLOR_HEX.yellow} 90deg 180deg, ${COLOR_HEX.blue} 180deg 270deg, ${COLOR_HEX.red} 270deg 360deg)`,
                 }}
                 className="flex items-center justify-center"
