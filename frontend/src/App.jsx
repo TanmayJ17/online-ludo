@@ -10,6 +10,7 @@ import { SocketProvider } from './context/SocketContext';
 // test area
 // import Board from './components/Board';
 // import Token from './components/Token';
+import GameBoard from './pages/GameBoard';
 // test area end
 
 function App() {
@@ -40,6 +41,14 @@ function App() {
               </div>
             }
           /> */}
+          <Route
+            path="/game/:roomCode"
+            element={
+              <ProtectedRoute>
+                <GameBoard />
+              </ProtectedRoute>
+            }
+          />
           {/* test area end */}
 
           <Route path="/login" element={<Login />} />

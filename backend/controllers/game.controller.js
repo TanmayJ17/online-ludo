@@ -329,6 +329,12 @@ module.exports.rollDice = async(req, res) => {
 
             scheduleTurnTimer(roomCode, () => handleTurnTimeout(roomCode));
 
+            io.to(roomCode).emit('turnSkipped', {
+                dice,
+                color: nextPlayer.color,
+                username: nextPlayer.user.username
+            });
+
             return res.status(200).json({
                 message: "No valid moves, turn skipped",
                 color: nextPlayer.color,
