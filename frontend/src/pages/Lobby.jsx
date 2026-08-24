@@ -89,7 +89,8 @@ function Lobby() {
                 </div>
 
                 <div className="text-center my-10">
-                    <h1 className="font-display text-6xl font-extrabold text-ink tracking-tight">
+                    {/* <h1 className="font-display text-6xl font-extrabold text-ink tracking-tight"> */}
+                    <h1 className="font-display text-5xl sm:text-6xl font-extrabold text-ink tracking-tight">
                         LUDO<span className="text-ludo-red">.</span>
                     </h1>
                     <p className="font-body text-ink/60 mt-2 mb-6">

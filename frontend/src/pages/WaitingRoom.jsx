@@ -106,7 +106,8 @@ function WaitingRoom() {
 
                 <div className="text-center mb-8">
                     <p className="font-body text-sm text-ink/50 mb-1">Room code</p>
-                    <h1 className="font-display text-5xl font-extrabold text-ink tracking-[0.15em]">
+                    {/* <h1 className="font-display text-5xl font-extrabold text-ink tracking-[0.15em]"> */}
+                    <h1 className="font-display text-4xl sm:text-5xl font-extrabold text-ink tracking-[0.1em] sm:tracking-[0.15em]">
                         {roomCode}
                     </h1>
                     <div className="mt-4">

@@ -28,8 +28,8 @@ function Board({ children }) {
             style={{
                 gridTemplateColumns: 'repeat(15, 1fr)',
                 gridTemplateRows: 'repeat(15, 1fr)',
-                width: 'min(90vw, 600px)',
-                height: 'min(90vw, 600px)',
+                width: 'min(96vw, 600px)',
+                height: 'min(96vw, 600px)',
             }}
         >
             {/* Home yard backdrops — purely decorative color blocks, no nested grid */}

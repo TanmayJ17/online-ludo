@@ -241,7 +241,8 @@ function GameBoard() {
     }
 
     return (
-        <div className="min-h-screen bg-cream px-4 py-8 flex flex-col items-center">
+        // <div className="min-h-screen bg-cream px-4 py-8 flex flex-col items-center">
+        <div className="min-h-screen bg-cream px-2 sm:px-4 py-6 sm:py-8 flex flex-col items-center">
 
             <div className="flex items-center gap-2 mb-4 bg-white rounded-full px-4 py-2 shadow-sm">
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLOR_HEX[currentPlayer.color] }} />
