@@ -51,20 +51,6 @@ function Lobby() {
     return (
         <div className="min-h-screen bg-cream px-4 py-10">
             <div className="max-w-2xl mx-auto">
-
-                {/* <div className="flex justify-between items-start mb-2">
-                    <div>
-                        <p className="font-body text-sm text-ink/50">Welcome back</p>
-                        <h2 className="font-display text-2xl font-bold text-ink">{user?.username}</h2>
-                    </div>
-                    <button
-                        onClick={logout}
-                        className="font-body text-sm text-ink/50 hover:text-ludo-red transition mt-1"
-                    >
-                        Logout
-                    </button>
-                </div> */}
-
                 <div className="flex justify-between items-start mb-2">
                     <div>
                         <p className="font-body text-sm text-ink/50">Welcome back</p>
@@ -79,6 +65,12 @@ function Lobby() {
                                 Admin
                             </Link>
                         )}
+                        <Link
+                            to="/profile"
+                            className="font-body text-sm text-ink/50 hover:text-ink transition"
+                        >
+                            Profile
+                        </Link>
                         <button
                             onClick={logout}
                             className="font-body text-sm text-ink/50 hover:text-ludo-red transition"

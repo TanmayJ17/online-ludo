@@ -8,6 +8,7 @@ import WaitingRoom from './pages/WaitingRoom';
 import { SocketProvider } from './context/SocketContext';
 import AdminRoute from './components/AdminRoute';
 import Admin from './pages/Admin';
+import Profile from './pages/Profile';
 
 // test area
 // import Board from './components/Board';
@@ -55,6 +56,14 @@ function App() {
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/admin"
             element={
