@@ -10,7 +10,6 @@ const userSchema = new mongoose.Schema(
         unique: true,
         trim: true
     },
-
     email: {
         type: String,
         required: true,
@@ -18,23 +17,19 @@ const userSchema = new mongoose.Schema(
         lowercase: true,
         trim: true
     },
-
     password: {
         type: String,
         required: true
     },
-
     profileImage: {
         type: String,
         default: ""
     },
-
     role: {
         type: String,
         enum: ["user", "admin"],
         default: "user"
     },
-
     stats: {
         wins: {
             type: Number,
@@ -44,6 +39,10 @@ const userSchema = new mongoose.Schema(
             type: Number,
             default: 0
         }
+    },
+    isBot: {
+        type: Boolean,
+        default: false
     }
 },
 {

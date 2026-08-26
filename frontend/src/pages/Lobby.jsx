@@ -17,6 +17,7 @@ function Lobby() {
     const [joinCode, setJoinCode] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [botCount, setBotCount] = useState(1);
 
     const { user, logout } = useAuth();
     const navigate = useNavigate();
@@ -29,6 +30,19 @@ function Lobby() {
             navigate(`/waiting/${res.data.roomCode}`);
         } catch (err) {
             setError(err.response?.data?.message || 'Could not create room');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handlePlayVsBot = async () => {
+        setError('');
+        setLoading(true);
+        try {
+            const res = await api.post('/game/create-vs-bot', { color: selectedColor, botCount });
+            navigate(`/game/${res.data.roomCode}`);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Could not start bot game');
         } finally {
             setLoading(false);
         }
@@ -49,8 +63,8 @@ function Lobby() {
     };
 
     return (
-        <div className="min-h-screen bg-cream px-4 py-10">
-            <div className="max-w-2xl mx-auto">
+        <div className="min-h-screen bg-cream px-4 pt-10">
+            <div className="max-w-5xl mx-auto">
                 <div className="flex justify-between items-start mb-2">
                     <div>
                         <p className="font-body text-sm text-ink/50">Welcome back</p>
@@ -81,7 +95,6 @@ function Lobby() {
                 </div>
 
                 <div className="text-center my-10">
-                    {/* <h1 className="font-display text-6xl font-extrabold text-ink tracking-tight"> */}
                     <h1 className="font-display text-5xl sm:text-6xl font-extrabold text-ink tracking-tight">
                         LUDO<span className="text-ludo-red">.</span>
                     </h1>
@@ -97,9 +110,9 @@ function Lobby() {
                     </p>
                 )}
 
-                <div className="grid sm:grid-cols-2 gap-5">
+                <div className="grid sm:grid-cols-3 gap-8">
 
-                    <div className="bg-white rounded-3xl shadow-md p-6 border-b-4 border-ludo-red">
+                    <div className="bg-white rounded-3xl shadow-md p-8 border-b-4 border-ludo-red">
                         <h2 className="font-display text-xl font-bold text-ink mb-1">Create a room</h2>
                         <p className="font-body text-sm text-ink/50 mb-4">Start a new game and invite friends</p>
 
@@ -131,7 +144,39 @@ function Lobby() {
                         </button>
                     </div>
 
-                    <div className="bg-white rounded-3xl shadow-md p-6 border-b-4 border-ludo-blue flex flex-col">
+                    <div className="bg-white rounded-3xl shadow-md p-8 border-b-4 border-ludo-green">
+                        <h2 className="font-display text-xl font-bold text-ink mb-1">Play vs Computer</h2>
+                        <p className="font-body text-sm text-ink/50 mb-4">No friends around? Play solo against bots</p>
+
+                        <p className="font-body text-xs font-semibold text-ink/40 uppercase tracking-wide mb-2">
+                            Number of bots
+                        </p>
+                        <div className="flex gap-2 mb-5">
+                            {[1, 2, 3].map((count) => (
+                                <button
+                                    key={count}
+                                    onClick={() => setBotCount(count)}
+                                    className={`flex-1 font-display font-bold py-2 rounded-xl transition ${
+                                        botCount === count
+                                            ? 'bg-ink text-cream'
+                                            : 'bg-cream text-ink/50 hover:bg-ink/5'
+                                    }`}
+                                >
+                                    {count}
+                                </button>
+                            ))}
+                        </div>
+
+                        <button
+                            onClick={handlePlayVsBot}
+                            disabled={loading}
+                            className="font-display w-full bg-ludo-green hover:bg-ludo-green/90 text-white font-bold py-3 rounded-xl transition disabled:opacity-50"
+                        >
+                            Play vs Computer
+                        </button>
+                    </div>
+
+                    <div className="bg-white rounded-3xl shadow-md p-8 border-b-4 border-ludo-blue flex flex-col">
                         <h2 className="font-display text-xl font-bold text-ink mb-1">Join a room</h2>
                         <p className="font-body text-sm text-ink/50 mb-4">Got a code from a friend?</p>
 
@@ -157,6 +202,10 @@ function Lobby() {
 
                 </div>
             </div>
+            <p className="font-body text-xs text-center text-ink/30 mt-12 pb-6">
+                        Jai Jai Shri Hit Harivansh
+                    © {new Date().getFullYear()} Ludo · Built by Tanmay Jain
+            </p>
         </div>
     );
 }

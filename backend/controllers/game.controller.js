@@ -4,6 +4,22 @@ const { finalizeIfGameOver } = require('../services/gameEnd.service');
 const { getMovableTokens, MoveToken, checkCapture } = require('../services/moment.service');
 const { scheduleTurnTimer, clearTurnTimer } = require('../services/turnTimer.service');
 const generateRoomCode = require('../utils/generateRoomCode');
+const COLOR_ORDER_LIST = ['red', 'green', 'yellow', 'blue'];
+const { playBotTurn } = require('../services/botPlayer.service');
+
+// Call this any time currentTurnIndex changes to a new player. If that
+// player is a bot, kick off its turn automatically instead of scheduling
+// the human miss-timer.
+function triggerNextTurn(game, roomCode) {
+    if (game.status === "finished") return;
+
+    const nextPlayer = game.players[game.currentTurnIndex];
+    if (nextPlayer.user.isBot) {
+        setTimeout(() => playBotTurn(roomCode), 900);
+    } else {
+        scheduleTurnTimer(roomCode, () => handleTurnTimeout(roomCode));
+    }
+}
 
 module.exports.createRoom = async(req, res) => {
     const {color} = req.body;
@@ -199,7 +215,7 @@ module.exports.startGame = async(req, res) => {
         const { io } = require('../app');
         const game = await Game.findOne({roomCode}).populate(
         "players.user",
-        "username profileImage"
+        "username profileImage isBot"
         );
 
         if(!game){
@@ -242,7 +258,8 @@ module.exports.startGame = async(req, res) => {
 
         await game.save();
 
-        scheduleTurnTimer(roomCode, () => handleTurnTimeout(roomCode));
+        // scheduleTurnTimer(roomCode, () => handleTurnTimeout(roomCode));
+        triggerNextTurn(game, roomCode);
         io.to(roomCode).emit('gameStarted', {
             message: "Game started successfully",
             game
@@ -278,7 +295,7 @@ module.exports.rollDice = async(req, res) => {
         const { io } = require('../app');
         const game = await Game.findOne({roomCode}).populate(
         "players.user",
-        "username profileImage"
+        "username profileImage isBot"
         );
 
         if(!game){
@@ -327,7 +344,8 @@ module.exports.rollDice = async(req, res) => {
             game.turnStartedAt = new Date();
             await game.save();
 
-            scheduleTurnTimer(roomCode, () => handleTurnTimeout(roomCode));
+            // scheduleTurnTimer(roomCode, () => handleTurnTimeout(roomCode));
+            triggerNextTurn(game, roomCode);
 
             io.to(roomCode).emit('turnSkipped', {
                 dice,
@@ -381,7 +399,7 @@ module.exports.moveToken = async (req, res) => {
         const { io } = require('../app');
         const game = await Game.findOne({roomCode}).populate(
         "players.user",
-        "username profileImage"
+        "username profileImage isBot"
         );
         if(!game){
             return res.status(404).json({
@@ -456,7 +474,8 @@ module.exports.moveToken = async (req, res) => {
         await game.save();
 
         if (game.status !== "finished") {
-            scheduleTurnTimer(roomCode, () => handleTurnTimeout(roomCode));
+            // scheduleTurnTimer(roomCode, () => handleTurnTimeout(roomCode));
+            triggerNextTurn(game, roomCode);
         }
 
         const responseBody = {
@@ -496,7 +515,7 @@ async function handleTurnTimeout(roomCode) {
     const { io } = require('../app');
 
     try {
-        const game = await Game.findOne({ roomCode }).populate("players.user", "username profileImage");
+        const game = await Game.findOne({ roomCode }).populate("players.user", "username profileImage isBot");
 
         // stale timer firing after the game already moved on — ignore it
         if (!game || game.status !== "playing" || game.currentDiceValue !== null) return;
@@ -536,7 +555,8 @@ async function handleTurnTimeout(roomCode) {
         });
 
         if (game.status !== "finished") {
-            scheduleTurnTimer(roomCode, () => handleTurnTimeout(roomCode));
+            // scheduleTurnTimer(roomCode, () => handleTurnTimeout(roomCode));
+            triggerNextTurn(game, roomCode);
         }
     } catch (err) {
         console.log("Turn timeout error:", err);
@@ -582,3 +602,62 @@ module.exports.getGameState = async (req, res) => {
         });
     }
 };
+
+module.exports.createRoomVsBot = async (req, res) => {
+    const { color, botCount } = req.body;
+
+    if (!color) {
+        return res.status(400).json({ message: "Color is required" });
+    }
+    if (!botCount || botCount < 1 || botCount > 3) {
+        return res.status(400).json({ message: "botCount must be between 1 and 3" });
+    }
+
+    try {
+        let roomCode;
+        do {
+            roomCode = generateRoomCode();
+        } while (await Game.findOne({ roomCode }));
+
+        const botColors = COLOR_ORDER_LIST.filter(c => c !== color).slice(0, botCount);
+
+        const botPlayers = [];
+        for (const botColor of botColors) {
+            const botUser = await User.findOne({ email: `bot.${botColor}@ludo.internal` });
+            if (!botUser) {
+                return res.status(500).json({ message: `Bot for color ${botColor} not seeded — run scripts/seedBots.js` });
+            }
+            botPlayers.push({ user: botUser._id, color: botColor });
+        }
+
+        const allPlayers = [{ user: req.user._id, color }, ...botPlayers]
+            .sort((a, b) => COLOR_ORDER_LIST.indexOf(a.color) - COLOR_ORDER_LIST.indexOf(b.color));
+
+        const game = await Game.create({
+            roomCode,
+            host: req.user._id,
+            status: "playing",
+            currentTurnIndex: 0,
+            turnStartedAt: new Date(),
+            players: allPlayers
+        });
+
+        await game.populate("players.user", "username profileImage isBot");
+
+        triggerNextTurn(game, roomCode);
+
+        return res.status(201).json({
+            message: "Bot game created successfully",
+            roomCode: game.roomCode,
+            game
+        });
+
+    } catch (error) {
+        if (error.name === "ValidationError") {
+            return res.status(400).json({ message: error.message });
+        }
+        return res.status(500).json({ message: error.message, error });
+    }
+};
+
+module.exports.handleTurnTimeout = handleTurnTimeout;
