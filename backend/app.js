@@ -9,7 +9,9 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = process.env.PORT;
 
-app.use(cors());
+app.use(cors({
+    origin: 'https://online-ludo-frontend.onrender.com'
+}));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -25,12 +27,12 @@ app.use('/auth', authRoutes);
 app.use('/game', gameRoutes);
 app.use('/admin', adminRoutes);
 
-// --- Socket.IO setup ---
+// Socket.IO setup
 const socketAuth = require('./middlewares/socketAuth');
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "*" // tighten this to frontend URL once deployed
+        origin: 'https://online-ludo-frontend.onrender.com'
     }
 });
 
@@ -55,7 +57,7 @@ io.on('connection', (socket) => {
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
-    server.listen(PORT, () => {   // ← listen on `server`, not `app`
+    server.listen(PORT, () => {
       console.log(`http://localhost:${PORT}`);
     });
   })
