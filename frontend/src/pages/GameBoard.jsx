@@ -37,9 +37,22 @@ function GameBoard() {
     const gameRef = useRef(null);
     useEffect(() => { gameRef.current = game; }, [game]);
 
+    const fetchIdRef = useRef(0);
+
+    // const fetchGameState = useCallback(() => {
+    //     api.post('/game/state', { roomCode })
+    //         .then((res) => setGame(res.data.game))
+    //         .catch((err) => setError(err.response?.data?.message || 'Could not load game'));
+    // }, [roomCode]);
+
     const fetchGameState = useCallback(() => {
+        const requestId = ++fetchIdRef.current;
         api.post('/game/state', { roomCode })
-            .then((res) => setGame(res.data.game))
+            .then((res) => {
+                if (requestId === fetchIdRef.current) {
+                    setGame(res.data.game);
+                }
+            })
             .catch((err) => setError(err.response?.data?.message || 'Could not load game'));
     }, [roomCode]);
 
