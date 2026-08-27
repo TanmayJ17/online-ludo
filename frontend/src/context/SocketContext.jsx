@@ -15,7 +15,7 @@ export function SocketProvider({ children }) {
         }
 
         const token = localStorage.getItem('token');
-        const newSocket = io('http://localhost:4444', {
+        const newSocket = io('https://online-ludo-backend.onrender.com', {
             auth: { token },
         });
 

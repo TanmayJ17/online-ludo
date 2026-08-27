@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:4444', // your backend port
+    baseURL: 'https://online-ludo-backend.onrender.com', // your backend port
 });
 
 // Attach the JWT to every request automatically, if we have one
