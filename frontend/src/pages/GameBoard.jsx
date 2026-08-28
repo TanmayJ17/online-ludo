@@ -159,13 +159,45 @@ function GameBoard() {
     }, [socket, roomCode, fetchGameState]);
 
     // Drives the step-by-step token animation
+    // useEffect(() => {
+    //     if (!animation) return;
+
+    //     if (animation.stepIndex >= animation.steps.length - 1) {
+    //         const timer = setTimeout(() => {
+    //             setAnimation(null);
+    //             fetchGameState();
+    //         }, STEP_DELAY_MS);
+    //         return () => clearTimeout(timer);
+    //     }
+
+    //     const timer = setTimeout(() => {
+    //         setAnimation((prev) => prev ? { ...prev, stepIndex: prev.stepIndex + 1 } : null);
+    //     }, STEP_DELAY_MS);
+    //     return () => clearTimeout(timer);
+    // }, [animation, fetchGameState]);
+
+    // Drives the step-by-step token animation
     useEffect(() => {
         if (!animation) return;
 
         if (animation.stepIndex >= animation.steps.length - 1) {
-            const timer = setTimeout(() => {
-                setAnimation(null);
-                fetchGameState();
+            const timer = setTimeout(async () => {
+                // Fetch fresh state FIRST, and only clear the animation overlay
+                // once we actually have new data to replace it with. Clearing it
+                // early leaves a gap where the board falls back to the stale
+                // pre-move position until the (slow, on a real network) fetch
+                // resolves — that's what was causing the visible snap-back.
+                const requestId = ++fetchIdRef.current;
+                try {
+                    const res = await api.post('/game/state', { roomCode });
+                    if (requestId === fetchIdRef.current) {
+                        setGame(res.data.game);
+                    }
+                } catch (err) {
+                    setError(err.response?.data?.message || 'Could not load game');
+                } finally {
+                    setAnimation(null);
+                }
             }, STEP_DELAY_MS);
             return () => clearTimeout(timer);
         }
@@ -174,7 +206,7 @@ function GameBoard() {
             setAnimation((prev) => prev ? { ...prev, stepIndex: prev.stepIndex + 1 } : null);
         }, STEP_DELAY_MS);
         return () => clearTimeout(timer);
-    }, [animation, fetchGameState]);
+    }, [animation, roomCode]);
 
     const currentPlayer = game?.players[game.currentTurnIndex];
     const isMyTurn = currentPlayer && (currentPlayer.user._id === user.id || currentPlayer.user._id === user._id);
