@@ -45,11 +45,30 @@ function GameBoard() {
     //         .catch((err) => setError(err.response?.data?.message || 'Could not load game'));
     // }, [roomCode]);
 
+    // const fetchGameState = useCallback(() => {
+    //     const requestId = ++fetchIdRef.current;
+    //     api.post('/game/state', { roomCode })
+    //         .then((res) => {
+    //             if (requestId === fetchIdRef.current) {
+    //                 setGame(res.data.game);
+    //             }
+    //         })
+    //         .catch((err) => setError(err.response?.data?.message || 'Could not load game'));
+    // }, [roomCode]);
+
     const fetchGameState = useCallback(() => {
         const requestId = ++fetchIdRef.current;
+        const startedAt = Date.now();
+        console.log(`[fetch#${requestId}] STARTED at ${startedAt}`);
         api.post('/game/state', { roomCode })
             .then((res) => {
-                if (requestId === fetchIdRef.current) {
+                const finishedAt = Date.now();
+                const applied = requestId === fetchIdRef.current;
+                console.log(
+                    `[fetch#${requestId}] RESOLVED at ${finishedAt} (took ${finishedAt - startedAt}ms) — applied: ${applied} — currentFetchIdRef: ${fetchIdRef.current}`,
+                    res.data.game.players.map(p => ({ color: p.color, tokens: p.tokens.map(t => t.boardPosition) }))
+                );
+                if (applied) {
                     setGame(res.data.game);
                 }
             })
@@ -85,6 +104,7 @@ function GameBoard() {
         });
 
         socket.on('tokenMoved', (data) => {
+            console.log('[tokenMoved event received]', Date.now(), data.result);
             setDiceValue(null);
             setMovableTokens([]);
 
