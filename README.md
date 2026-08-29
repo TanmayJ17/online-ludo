@@ -150,4 +150,4 @@ online-ludo/
 
 ## License
 
-ISC
+MIT
