@@ -21,7 +21,7 @@ function Profile() {
 
     return (
         <div className="min-h-screen bg-cream px-4 py-10">
-            <div className="max-w-md mx-auto">
+            <div className="max-w-2xl mx-auto">
 
                 <Link to="/" className="font-body text-sm text-ink/50 hover:text-ink mb-6 inline-block">
                     ← Back to lobby
@@ -45,16 +45,16 @@ function Profile() {
                     </p>
                 )}
 
-                <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-white rounded-2xl shadow-md p-4 text-center border-b-4 border-ludo-yellow">
+                <div className="grid grid-cols-3 gap-6">
+                    <div className="bg-white rounded-2xl shadow-md p-6 text-center border-b-4 border-ludo-yellow">
                         <p className="font-display text-3xl font-bold text-ink">{wins}</p>
                         <p className="font-body text-xs text-ink/50 mt-1">Wins</p>
                     </div>
-                    <div className="bg-white rounded-2xl shadow-md p-4 text-center border-b-4 border-ludo-blue">
+                    <div className="bg-white rounded-2xl shadow-md p-6 text-center border-b-4 border-ludo-blue">
                         <p className="font-display text-3xl font-bold text-ink">{gamesPlayed}</p>
                         <p className="font-body text-xs text-ink/50 mt-1">Played</p>
                     </div>
-                    <div className="bg-white rounded-2xl shadow-md p-4 text-center border-b-4 border-ludo-green">
+                    <div className="bg-white rounded-2xl shadow-md p-6 text-center border-b-4 border-ludo-green">
                         <p className="font-display text-3xl font-bold text-ink">{winRate}%</p>
                         <p className="font-body text-xs text-ink/50 mt-1">Win rate</p>
                     </div>
