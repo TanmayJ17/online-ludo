@@ -7,14 +7,18 @@ A full-stack, real-time multiplayer Ludo game — play the classic board game wi
 > Hosted on free-tier infrastructure — the backend spins down after inactivity, so the first request after a while may take 30–50 seconds to wake up. Gameplay after that has some inherent network latency (separate backend and database hosts), but is fully functional.
 
 <!-- Add a screenshot or GIF of the game board here -->
-<!-- ![Gameplay screenshot](./docs/screenshot.png) -->
+![Lobby page](./docs/lobby.png)
+![Gameplay screenshot](./docs/gameplay1.png)
 
 ---
 
 ## Features
 
 - **Accounts & auth** — JWT-based registration/login, Bearer token auth on every protected route
+![Login page](./docs/login.png)
+![Register page](./docs/register.png)
 - **Rooms via shareable code** — create a room, share a 6-character code, friends join instantly
+![Waiting page](./docs/waiting.png)
 - **Play vs Computer** — no friends online? Play solo against 1–3 AI bots, any starting color
 - **Real-time gameplay** — dice rolls, token moves, captures, and turn changes sync live across every connected player via Socket.IO
 - **Full Ludo rules engine, built from scratch** — no third-party game library:
@@ -22,6 +26,7 @@ A full-stack, real-time multiplayer Ludo game — play the classic board game wi
   - Captures on non-safe squares, with an extra turn on a successful capture
   - Extra turn on rolling a 6, with a 3-in-a-row forfeit-turn penalty
   - Win detection and automatic final rankings once a player finishes all 4 tokens
+![Gameplay demo bots](./docs/gameplay2.png)
 - **Turn timer & auto-forfeit** — a player who doesn't roll within 60 seconds has their turn auto-skipped; after 3 missed turns in a row, they're forfeited from the match entirely
 - **Bot AI** — priority-based decision engine: capture an opponent > finish a token > avoid a move that exposes a token to capture next turn > escape home on a 6 > advance the furthest token
 - **Live win/loss stats** — per-user wins and games-played, updated automatically when a match ends, visible on a dedicated profile page
